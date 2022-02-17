@@ -1,0 +1,119 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: hello-world
+spec:
+  replicas: 0 
+  resources:
+    requests:
+      cpu: 10m
+      memory: 10Mi
+    limits:
+      cpu: 800m
+      memory: 500Mi 
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - hello-world
+          topologyKey: "zone"
+---          
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: res-hw-queue 
+  namespace: default
+spec:
+  name:  queue
+  autoDelete: false
+  durable: true
+  type: quorum
+  rabbitmqClusterReference:
+    name: hello-world
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: res-hw-dlq
+  namespace: default
+spec:
+  name:  queue
+  autoDelete: false
+  durable: true
+  type: quorum
+  rabbitmqClusterReference:
+    name: hello-world
+
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Policy
+metadata:
+  name: policy-ttl
+spec:
+  name: ttl # name of the policy
+  pattern: "queu" # regex used to match queues and exchanges
+  applyTo: "queues" # set to 'queues', 'exchanges', or 'all'
+  definition: # policy definition
+#    message-ttl: 10000
+    dead-letter-exchange: ""
+    dead-letter-routing-key: "dlq"
+  rabbitmqClusterReference:
+    name: hello-world # rabbitmqCluster must exist in the same namespace as this resource
+---    
+apiVersion: rabbitmq.com/v1beta1
+kind: Exchange
+metadata:
+  name: myex
+  namespace: default
+spec:
+  name: myex # name of the exchange
+  type: topic # default to 'direct' if not provided; can be set to 'direct', 'fanout', 'headers', and 'topic'
+  autoDelete: false
+  durable: true
+  rabbitmqClusterReference:
+    name: hello-world
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Exchange
+metadata:
+  name: mytopicex
+  namespace: default
+spec:
+  name: mytopicex # name of the exchange
+  type: topic # default to 'direct' if not provided; can be set to 'direct', 'fanout', 'headers', and 'topic'
+  autoDelete: false
+  durable: true
+  rabbitmqClusterReference:
+    name: hello-world
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Binding
+metadata:
+  name: bindingex
+  namespace: default
+spec:
+  source: myex # an existing exchange
+  destination: queue # an existing queue
+  destinationType: queue # can be 'queue' or 'exchange'
+  routingKey: queue
+  rabbitmqClusterReference:
+    name: hello-world
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: Binding
+metadata:
+  name: bindingtopic
+  namespace: default
+spec:
+  source: mytopicex # an existing exchange
+  destination: queue # an existing queue
+  destinationType: queue # can be 'queue' or 'exchange'
+  routingKey: queue
+  rabbitmqClusterReference:
+    name: hello-world
