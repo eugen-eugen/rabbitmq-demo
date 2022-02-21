@@ -117,3 +117,31 @@ spec:
   routingKey: queue
   rabbitmqClusterReference:
     name: hello-world
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+  name: rabbit
+  namespace: default
+spec:
+  clusterIP: 10.43.69.228
+  clusterIPs:
+  - 10.43.69.228
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: rabbit
+    nodePort: 30672
+    port: 15672
+    protocol: TCP
+    targetPort: 15672
+  - name: rabbit2
+    nodePort: 31672
+    port: 5672
+    protocol: TCP
+    targetPort: 5672
+  selector:
+    app.kubernetes.io/name: hello-world
+  sessionAffinity: None
+  type: NodePort
+
