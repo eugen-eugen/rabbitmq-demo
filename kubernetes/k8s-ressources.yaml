@@ -4,7 +4,6 @@ kind: StorageClass
 metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
-    time: "2022-02-10T22:32:24Z"
   name: cephfs
   resourceVersion: "2718091"
   uid: f9783845-0abe-47a2-9b0e-ee591271a4f8
@@ -67,7 +66,7 @@ kind: RabbitmqCluster
 metadata:
   name: hello-world
 spec:
-  replicas: 0 
+  replicas: 3 
   resources:
     requests:
       cpu: 10m
